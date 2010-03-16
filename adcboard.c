@@ -682,7 +682,7 @@ int __init init_module()
     u32 iolen;
     unsigned long timer;
 
-    while ((pdev = pci_find_class(ADC_CLASS << 8, pdev)))
+    while ((pdev = pci_get_class(ADC_CLASS << 8, pdev)))
     {
         DEB(printk("Found %08x (%08x)\n", pdev->vendor, pdev->device));
         if((pdev->vendor == ADC_VENDOR) &&
@@ -727,6 +727,7 @@ int __init init_module()
     {
         printk(KERN_CRIT"%s: Can't allocate memory\n", devname);
         pci_disable_device(pdev);             /* Disable the device     */
+        pci_dev_put(pdev);
         return -ENOMEM;
     }
     memset(info, 0x00, sizeof(INFO));         /* Clear the structure  */
@@ -755,6 +756,7 @@ int __init init_module()
         printk(KERN_ALERT"%s: Can't register major number %d\n",
                                               devname, info->major);
         pci_disable_device(pdev);             /* Disable the device     */
+        pci_dev_put(pdev);
         kfree(info);
         return result;
     }
@@ -763,6 +765,7 @@ int __init init_module()
     {
         printk(KERN_ALERT"%s: Can't allocate IRQ %d\n", devname, info->irq);
         pci_disable_device(pdev);             /* Disable the device     */
+        pci_dev_put(pdev);
         (void)unregister_chrdev(info->major, info->dev);
         release_region(info->base, info->iolen);
         kfree(info);
@@ -812,6 +815,7 @@ void cleanup_module()
     unregister_chrdev(info->major, info->dev);
     free_irq(info->irq, info);
     release_region(info->base, info->iolen);
+    pci_dev_put(info->pci);
     printk(KERN_INFO"%s: Module removed\n", info->dev);
     kfree(info);
     return;

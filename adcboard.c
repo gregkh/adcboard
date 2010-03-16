@@ -762,7 +762,7 @@ int __init init_module()
         return result;
     }
     request_region(info->base, info->iolen, info->dev);
-    if((result=request_irq(info->irq, adc_isr, SA_SHIRQ, info->dev, info)) < 0)
+    if((result=request_irq(info->irq, adc_isr, IRQF_SHARED, info->dev, info)) < 0)
     {
         printk(KERN_ALERT"%s: Can't allocate IRQ %d\n", devname, info->irq);
         pci_disable_device(pdev);             /* Disable the device     */

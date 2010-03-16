@@ -186,7 +186,7 @@ static int adc_read(struct file *fp, char *cp, size_t len, loff_t *ppos);
 static int adc_ioctl(struct inode *inp, struct file *fp, unsigned int cmd, unsigned long ptr);
 static unsigned int adc_poll(struct file *fp, struct poll_table_struct *pt);
 static size_t next_chan(INFO *inf);
-static void adc_isr(int irq, void *lcl);
+static irqreturn_t adc_isr(int irq, void *lcl);
 static void acq_data(INFO *inf);
 static void set_mode(INFO *inf);
 static void stop_board(INFO *inf);
@@ -658,7 +658,7 @@ static int adc_close(struct inode *inp, struct file *fp)
 /*
  *   Simple ADC interrupt service routine.
  */
-static void adc_isr(int irq, void *lcl)
+static irqreturn_t adc_isr(int irq, void *lcl)
 {
     spin_lock(&info->adc_lock);
     acq_data(info);                          /* Get the data             */
@@ -666,7 +666,7 @@ static void adc_isr(int irq, void *lcl)
     spin_unlock(&info->adc_lock);
     info->inters++;                          /* Show we got an interrupt */
     wake_up_interruptible(&info->wait);      /* Show data are avaiable   */
-    return;
+    return IRQ_HANDLED;
 }
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*

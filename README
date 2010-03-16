@@ -1,0 +1,179 @@
+This is a port of the old PCI-AI12-16 data acquision driver for Linux to
+a more recent kernel version (2.6.34 as of right now.)
+
+Note, the license does not seem to work well with the GPL, so it can not
+be distributed with the rest of the Linux kernel source tree.  I have
+only forward ported the driver, fixing the obvious build warnings and
+errors.  I do not know if it works at all, or even what to do with this
+driver.
+
+Please address any questions to the original author, not me.
+
+The original README is below and the original source code, with
+userspace testing code, is in the original/ subdirectory.
+
+Greg Kroah-Hartman <greg@kroah.com>
+March 16, 2010
+
+------------------------
+
+       PCI-AI12-16 Data acquisition board driver documentation.
+
+       Sun Mar  2 21:03:43 EDST 2003      Richard B. Johnson
+                                          rjohnson@analogic.com
+
+       Many D/A Converter input boards and their software tend
+       to take over your computer. This driver does not. The
+       normal mode of operation has it quietly acquiring data
+       on all of its input channels all of the time. The data
+       from each of the channels is also filtered, using an
+       IIR filter, to help remove noise. When a user program
+       wants to read the data, it just reads a structure 
+       (buffer) containing the data from all 16 channels.
+       It can do this at any time without upsetting the
+       on-going conversion cycles.
+
+       The other mode of operation is to acquire data on any
+       single channel as fast as is possible. All of the
+       parameters are settable. Using this mode, you can
+       convert data up to about a 2.0 microsecond rate even
+       without a FIFO on the board.
+
+       In all cases, the data is presented to the API (you)
+       as an ordinary `int`, having been properly sign-extended,
+       etc. Since it has only 12 effective bits, it produces
+       data from -2048 to +2048 counts. You scale this to
+       whatever you want.
+
+       I downloaded the stuff that was supposed to be a Linux
+       driver for this board. It expected me to have some kind
+       of special environment installed. I gave up. Instead of
+       using that Linux stuff, I wrote a new driver. The driver
+       implements the Unix/Linux way of accessing hardware by
+       using device files. Using simple system calls like open(),
+       close(), read(), and ioctl(), you can access all the
+       functions of this board. Further, you don't need to be
+       concerned with the specifics of the hardware. The driver
+       does that. You can set up the board how you want it using
+       ioctl() function calls. This is all documented in the
+       header file, adcboard.h.
+
+       The present code uses a device major number of 177 for
+       access to the driver. You can change that to any unused
+       major number and re-compile the driver. The driver is
+       designed as a module for Linux versions 2.4.n on up. It
+       would have to be modified to work with version 2.5 because
+       the Linux developers keep changing the driver interface.
+
+       The program, tester, tests all the functions of the
+       board. It also shows how to use the driver because it
+       tests everything. Read the comments in tester.c, in
+       particular how to set up a filter. The driver provides
+       a built-in IIR filter that reduces real-world noise quite
+       well. It is not good to average data values in user-
+       mode code because the time at which the averaging occurs
+       is more-or-less random. The user, therefore, creates a
+       filter with a random pole which produces random results.
+       Not good. This driver provides a filter with distinct
+       characteristics, synchronized to the data-acquisition
+       interval. The filter uses fixed-point mathematics and
+       never accumulates a round-off error. The usual averaging 
+       methods use division which has a round-off error that
+       eventually accumulates to the value of 1 less than the
+       divisor. The method used here accumulates no round-
+       off error so you end up filtering the data without
+       accumulating a bias. Although the instantaneous error
+       could be as large at 1 less than the divisor, the average
+       error is zero. I should have patented this 30 years
+       ago when I invented it in the days of 8-bit processors. 
+
+       To make the driver and its test-code, execute `make clean'.
+       Then execute `make'. This should compile without warnings
+       if you have the Linux source-code installed in the correct
+       place. If not, you need to install the source-code for
+       the Linux version you are using in the correct place.
+       If your Linux version is 2.4.1, the correct place to install
+       the Linux source-code is in /usr/src/linux-2.4.1. As long
+       as the kernel you are using supports modules, you do not
+       need to actually build the kernel from its source but you
+       do need to configure the source so that the links to the
+       header files are correctly set. The source-code for this
+       driver needs only to interface with the header files in
+       the source-code tree.
+
+       To install the driver, you execute `ismod adcboard.o`.
+       If you want a GPL license within the code to prevent unrelated
+       panics from saying "tainted", execute `insmod ioadc.o` instead.
+       This second object file contains the GPL signature as well
+       as the driver code. Read the source, license.c, to find out
+       what it's about. It's about politics and a certain jerk who
+       wants to take credit for the work of thousands of individuals,
+       world-wide.
+
+       When you install the driver, it automatically determines
+       what resources are required and sets them up accordingly.
+       If you execute `dmesg` or read one of the log files in
+       /var/log, you will see:
+
+       ACCES I/O PRODUCTS PCI-AI12-16 A: Version    = V1.1
+       ACCES I/O PRODUCTS PCI-AI12-16 A: I/O port   = DFA0
+       ACCES I/O PRODUCTS PCI-AI12-16 A: I/O length = 16
+       ACCES I/O PRODUCTS PCI-AI12-16 A: Interrupt  = 10
+       ACCES I/O PRODUCTS PCI-AI12-16 A: Dev. major = 177
+       ACCES I/O PRODUCTS PCI-AI12-16 A: Patches to rjohnson@analogic.com
+       ACCES I/O PRODUCTS PCI-AI12-16 A: Initialization complete
+
+       The actual I/O space may be different on your machine, that's
+       what PnP is all about. This driver is designed to be able to
+       share an interrupt and it can also operate in a machine with
+       two or more CPUs.
+
+       If the board with a FIFO has been detected, the product
+       identification will look as shown. If there is no FIFO
+       on your board, the "A" at the end will be missing.
+
+       After the device driver module is installed, you can execute
+       `tester` to watch it work. Review the source-code, tester.c
+       to see how to integrate the new driver and its interface into
+       your application. Good luck. Notice from the source code,
+       tester.c, you can make a special device "file" anywhere.
+       they do not have to be in "/dev". In the test program, I
+       just create one if I found that one doesn't exist. A device-
+       file is just a "trick" to associate a file-descriptor with
+       a "major-number". Your code never actually accesses this
+       "file" so it's not a bottleneck. Also note that the first
+       invocation of `tester` must be by root to create the required
+       device file in the test directory.
+
+       In the "real world", you would probably create the correct
+       device-file in /dev so everybody could access it. You would,
+       after becoming root, execute:
+
+                  mknod /dev/ADC c 177 0
+                  chown root.sys /dev/ADC
+                  chmod 666 /dev/ADC
+
+       You can execute makenode.sh in the source-code directory
+       to perform this same feat if your fingers are cold. If you
+       change the major-number, remember to update this file.
+
+       Then, change the file-name in tester.c so you can use the
+       new device file you created.
+
+       Once you are satisfied with the driver, you can modify one
+       of the system start-up files to load the module automatically
+       each time you boot. Probably the easiest thing to do is to
+       add two lines to /etc/modules.conf. First, add, near its
+       beginning: "path[ioadc]=/complete/path/to/driver" (no quotes).
+       Second, anywhere, add: "alias char-major-177 ioadc" (no quotes).
+       Then execute `depmod ioadc`. The driver will be loaded as
+       soon as you need it, and will be unloaded after a few hours
+       of inactivity. It will continue to be reloaded anytime you
+       need it.
+
+       If you add any additional functionality or find some bugs, please
+       send me a patch.
+
+       Richard B. Johnson
+       rjohnson@analogic.com
+

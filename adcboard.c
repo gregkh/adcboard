@@ -353,7 +353,8 @@ static void set_point_list(INFO *inf)
  */
 static int remote_set_point_list(INFO *inf, struct adc_list *adc)
 {
-    size_t i, flags;
+    size_t i;
+    unsigned long flags;
     unsigned short list;
     if(!inf->has_fifo)
         return -EINVAL;
@@ -397,7 +398,7 @@ static int remote_set_point_list(INFO *inf, struct adc_list *adc)
 static void set_mode(INFO *inf)
 {
     int count;
-    size_t flags;
+    unsigned long flags;
     stop_board(inf);
     count = 2;
     while((inf->timer/count) > 65534)          /* Last even count  */
@@ -477,7 +478,7 @@ static void stop_board(INFO *inf)
  */
 static unsigned int adc_poll(struct file *fp, struct poll_table_struct *pt)
 {
-    size_t flags;
+    unsigned long flags;
     unsigned int mask;
     poll_wait(fp, &info->wait, pt);
     spin_lock_irqsave(&info->adc_lock, flags);
@@ -495,7 +496,7 @@ static int adc_ioctl(struct inode *inp, struct file *fp, unsigned int cmd,
                                                    unsigned long ptr)
 {
     size_t i;
-    size_t flags;
+    unsigned long flags;
     int tmp;
     struct adc_list *adc;
     switch(cmd)
@@ -610,7 +611,7 @@ static int adc_ioctl(struct inode *inp, struct file *fp, unsigned int cmd,
  */
 static int adc_read(struct file *fp, char *cp, size_t len, loff_t *ppos)
 {
-    size_t flags;
+    unsigned long flags;
     ssize_t i = 0;
     len /= sizeof(int);                              /* Make word-length */
     spin_lock_irqsave(&info->adc_lock, flags);

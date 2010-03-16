@@ -723,7 +723,7 @@ int __init init_module()
     }
     printk(KERN_INFO"%s: No I/O space for ADC board\n", devname);
     return -ENODEV;
-    addr_found: (void)pci_enable_device(pdev); /* Now enable the device  */
+    addr_found: result = pci_enable_device(pdev); /* Now enable the device  */
     if((info = (INFO *) kmalloc(sizeof(INFO), GFP_KERNEL)) == NULL)
     {
         printk(KERN_CRIT"%s: Can't allocate memory\n", devname);

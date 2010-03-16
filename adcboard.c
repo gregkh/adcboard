@@ -803,7 +803,6 @@ int __init init_module()
  */
 void cleanup_module()
 {
-    int result;
     atomic_inc(&info->unload);
     if(atomic_read(&info->busy))
     {
